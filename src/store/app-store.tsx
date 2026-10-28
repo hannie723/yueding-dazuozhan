@@ -11,7 +11,7 @@ import type { ServiceResult } from "@/domain/services";
 import type { NewTaskErrors, NewTaskInput } from "@/domain/tasks";
 import type { AppState, DomainContext, MemberId, ReviewDecision, Screenshot, Task } from "@/domain/types";
 
-type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string; fieldErrors?: NewTaskErrors };
+type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string; fieldErrors?: NewTaskErrors | undefined };
 
 interface AppStore {
   state: AppState;
@@ -20,7 +20,7 @@ interface AppStore {
     switchUser(id: MemberId): void;
     createTask(input: NewTaskInput): ActionResult<Task>;
     submitEvidence(input: { taskId: string; note: string; screenshots: Screenshot[] }): ActionResult;
-    reviewTask(input: { taskId: string; decision: ReviewDecision; comment?: string }): ActionResult<"approved" | "rejected" | "pending">;
+    reviewTask(input: { taskId: string; decision: ReviewDecision; comment?: string | undefined }): ActionResult<"approved" | "rejected" | "pending">;
     markFailed(taskId: string): ActionResult;
     cancelTask(taskId: string): ActionResult;
     settleOverdue(): ActionResult<number>;
@@ -134,5 +134,5 @@ export function useMembers() {
 
 export function useCurrentUser() {
   const { state } = useAppStore();
-  return state.members.find((m) => m.id === state.currentUserId) ?? state.members[0];
+  return (state.members.find((m) => m.id === state.currentUserId) ?? state.members[0])!;
 }

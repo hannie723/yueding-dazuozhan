@@ -30,7 +30,7 @@ export function weekDays(today: Date): Date[] {
 const WEEKDAY_LABELS = ["日", "一", "二", "三", "四", "五", "六"];
 
 export function weekdayLabel(date: Date): string {
-  return WEEKDAY_LABELS[date.getDay()];
+  return WEEKDAY_LABELS[date.getDay()] ?? "";
 }
 
 function pad(n: number) {

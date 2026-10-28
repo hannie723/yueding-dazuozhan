@@ -75,7 +75,7 @@ export function buildSubmission(input: {
 
 export function addVote(
   submission: Submission,
-  vote: { reviewerId: MemberId; decision: ReviewDecision; comment?: string; now: Date },
+  vote: { reviewerId: MemberId; decision: ReviewDecision; comment?: string | undefined; now: Date },
 ): Submission {
   return {
     ...submission,

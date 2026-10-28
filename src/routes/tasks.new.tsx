@@ -288,7 +288,7 @@ function NewTaskPage() {
   );
 }
 
-function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: ReactNode }) {
+function Field({ label, hint, error, children }: { label: string; hint?: string | undefined; error?: string | undefined; children: ReactNode }) {
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-2">

@@ -203,13 +203,13 @@ function SubmitForm({ task, resubmit }: { task: Task; resubmit: boolean }) {
   const [shots, setShots] = useState<Screenshot[]>([]);
 
   const addShot = (label?: string) => {
-    if (shots.length >= 6) return toast("最多添加 6 张截图");
+    if (shots.length >= 6) { toast("最多添加 6 张截图"); return; }
     setShots((s) => [...s, { id: `${Date.now()}-${s.length}`, label: label ?? `截图 ${s.length + 1}` }]);
   };
 
   const submit = () => {
     const r = actions.submitEvidence({ taskId: task.id, note, screenshots: shots });
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) { toast.error(r.error); return; }
     toast.success(resubmit ? "已重新提交" : "已提交，等待验收", { description: "验收人会收到提醒（模拟）" });
     setNote("");
     setShots([]);
@@ -270,7 +270,7 @@ function ReviewPanel({ task, submission }: { task: Task; submission: Submission 
 
   const vote = (decision: "approve" | "reject") => {
     const r = actions.reviewTask({ taskId: task.id, decision, comment });
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) { toast.error(r.error); return; }
     if (r.data === "approved") toast.success("验收通过！", { description: `执行人获得 ${task.reward} 金币` });
     else if (r.data === "rejected") toast("已退回", { description: "执行人可以补充后重新提交" });
     else toast("已投票", { description: "等待其他验收人投票" });
@@ -436,7 +436,7 @@ function MoreActions({ task }: { task: Task }) {
           confirmText="确认判定"
           onConfirm={() => {
             const r = actions.markFailed(task.id);
-            if (!r.ok) return toast.error(r.error);
+            if (!r.ok) { toast.error(r.error); return; }
             toast.warning("已判定为未完成", { description: `扣除 ${task.penalty} 金币` });
           }}
         />
@@ -454,7 +454,7 @@ function MoreActions({ task }: { task: Task }) {
           confirmText="确认取消"
           onConfirm={() => {
             const r = actions.cancelTask(task.id);
-            if (!r.ok) return toast.error(r.error);
+            if (!r.ok) { toast.error(r.error); return; }
             toast("任务已取消");
           }}
         />

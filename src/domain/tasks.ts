@@ -39,7 +39,7 @@ export interface NewTaskInput {
   penalty: number;
 }
 
-export type NewTaskErrors = Partial<Record<keyof NewTaskInput, string>>;
+export type NewTaskErrors = { [K in keyof NewTaskInput]?: string | undefined };
 
 export function validateNewTask(
   state: Pick<AppState, "tasks" | "group" | "members">,

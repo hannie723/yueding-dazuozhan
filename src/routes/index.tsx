@@ -84,7 +84,7 @@ function HomePage() {
 
   const settle = () => {
     const r = actions.settleOverdue();
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) { toast.error(r.error); return; }
     if (r.data === 0) toast("没有需要结算的逾期任务");
     else toast.warning(`已结算 ${r.data} 个逾期任务`, { description: "未完成的任务已扣除约定金币" });
   };
@@ -271,8 +271,8 @@ function Stat({
   icon: React.ReactNode;
   label: string;
   value: string;
-  highlight?: boolean;
-  onClick?: () => void;
+  highlight?: boolean | undefined;
+  onClick?: () => void | undefined;
 }) {
   const content = (
     <>
@@ -300,7 +300,7 @@ function TaskList({
 }: {
   tasks: Task[];
   empty: string;
-  hint?: (t: Task) => string | undefined;
+  hint?: (t: Task) => string | undefined | undefined;
 }) {
   if (tasks.length === 0) return <EmptyState icon={<Inbox />} title={empty} />;
   return (

@@ -26,9 +26,9 @@ import type {
 
 export type ServiceResult<T = undefined> =
   | { ok: true; state: AppState; events: DomainEvent[]; data: T }
-  | { ok: false; error: string; fieldErrors?: NewTaskErrors };
+  | { ok: false; error: string; fieldErrors?: NewTaskErrors | undefined };
 
-function fail(error: string, fieldErrors?: NewTaskErrors): { ok: false; error: string; fieldErrors?: NewTaskErrors } {
+function fail(error: string, fieldErrors?: NewTaskErrors): { ok: false; error: string; fieldErrors?: NewTaskErrors | undefined } {
   return { ok: false, error, fieldErrors };
 }
 
@@ -93,7 +93,7 @@ export function submitEvidence(
 /* ---------- 验收（单人或投票） ---------- */
 export function reviewTask(
   state: AppState,
-  input: { taskId: string; decision: ReviewDecision; comment?: string },
+  input: { taskId: string; decision: ReviewDecision; comment?: string | undefined },
   ctx: DomainContext,
 ): ServiceResult<"approved" | "rejected" | "pending"> {
   const task = findTask(state, input.taskId);

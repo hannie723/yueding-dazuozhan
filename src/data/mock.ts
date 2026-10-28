@@ -32,7 +32,7 @@ export function createMockState(now: Date = new Date()): AppState {
   const submissions: Submission[] = [];
   const ids = members.map((m) => m.id);
   const reviewerFor = (assignee: string, offset = 1) =>
-    ids[(ids.indexOf(assignee) + offset) % ids.length];
+    ids[(ids.indexOf(assignee) + offset) % ids.length]!;
 
   /* 过去 6 天的历史任务 */
   for (let d = 6; d >= 1; d--) {
@@ -40,7 +40,7 @@ export function createMockState(now: Date = new Date()): AppState {
     members.forEach((m, mi) => {
       const count = (d + mi) % 3 === 0 ? 2 : 1;
       for (let k = 0; k < count; k++) {
-        const tpl = HISTORY[(d + mi + k) % HISTORY.length];
+        const tpl = HISTORY[(d + mi + k) % HISTORY.length]!;
         // 少数日子未完成，制造真实的连续天数差异
         const failed = (m.id === "m-tang" && d === 2) || (m.id === "m-zhou" && d === 4 && k === 0);
         const due = atTime(day, 21 + k, 30);
@@ -71,7 +71,7 @@ export function createMockState(now: Date = new Date()): AppState {
             createdAt: atTime(day, 20).toISOString(),
             votes: [
               {
-                reviewerId: task.reviewerIds[0],
+                reviewerId: task.reviewerIds[0]!,
                 decision: "approve",
                 comment: "棒！",
                 createdAt: atTime(day, 22).toISOString(),

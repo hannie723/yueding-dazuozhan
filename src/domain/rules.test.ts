@@ -72,7 +72,7 @@ describe("金币结算", () => {
     const before = balanceOf(s.transactions, "m-zhe");
     const r = must(services.reviewTask({ ...s, currentUserId: "m-tang" }, { taskId: task.id, decision: "approve" }, ctx()));
     expect(balanceOf(r.state.transactions, "m-zhe")).toBe(before + 10);
-    expect(r.state.tasks[0].status).toBe("approved");
+    expect(r.state.tasks[0]?.status).toBe("approved");
   });
 
   it("判定未完成扣除约定惩罚 5 金币，且不会重复扣除", () => {
@@ -89,7 +89,7 @@ describe("金币结算", () => {
     const r = must(
       services.reviewTask({ ...s, currentUserId: "m-tang" }, { taskId: task.id, decision: "reject", comment: "缺截图" }, ctx()),
     );
-    expect(r.state.tasks[0].status).toBe("rejected");
+    expect(r.state.tasks[0]?.status).toBe("rejected");
     expect(balanceOf(r.state.transactions, "m-zhe")).toBe(before);
   });
 });

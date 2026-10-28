@@ -26,9 +26,9 @@ export function MemberAvatar({
   size = "md",
   className,
 }: {
-  member?: Member;
-  size?: keyof typeof avatarSize;
-  className?: string;
+  member?: Member | undefined;
+  size?: keyof typeof avatarSize | undefined;
+  className?: string | undefined;
 }) {
   return (
     <span
@@ -97,7 +97,7 @@ export function StatusBadge({ status, overdue }: { status: TaskStatus; overdue?:
   );
 }
 
-export function CoinAmount({ value, signed, className }: { value: number; signed?: boolean; className?: string }) {
+export function CoinAmount({ value, signed, className }: { value: number; signed?: boolean | undefined; className?: string }) {
   const text = signed && value > 0 ? `+${value}` : String(value);
   return (
     <span className={cn("inline-flex items-center gap-1 font-semibold tabular-nums", className)}>
@@ -135,6 +135,6 @@ export function EmptyState({ icon, title, hint }: { icon: ReactNode; title: stri
   );
 }
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
+export function Card({ className, children }: { className?: string | undefined; children: ReactNode }) {
   return <div className={cn("rounded-2xl bg-card p-4 shadow-soft", className)}>{children}</div>;
 }

@@ -13,7 +13,7 @@ export interface Member {
   /** 头像配色序号，对应设计系统中的 --member-1 ~ --member-5 */
   color: 1 | 2 | 3 | 4 | 5;
   /** 一句话签名 */
-  bio?: string;
+  bio?: string | undefined;
 }
 
 export interface Group {
@@ -51,7 +51,7 @@ export interface Task {
   penalty: number;
   status: TaskStatus;
   createdAt: string;
-  resolvedAt?: string;
+  resolvedAt?: string | undefined;
 }
 
 export interface Screenshot {
@@ -65,7 +65,7 @@ export type ReviewDecision = "approve" | "reject";
 export interface ReviewVote {
   reviewerId: MemberId;
   decision: ReviewDecision;
-  comment?: string;
+  comment?: string | undefined;
   createdAt: string;
 }
 
@@ -77,7 +77,7 @@ export interface Submission {
   screenshots: Screenshot[];
   createdAt: string;
   votes: ReviewVote[];
-  outcome?: "approved" | "rejected";
+  outcome?: "approved" | "rejected" | undefined;
 }
 
 export type CoinReason = "initial" | "task_reward" | "task_penalty";
@@ -88,7 +88,7 @@ export interface CoinTransaction {
   /** 正数为收入，负数为支出 */
   amount: number;
   reason: CoinReason;
-  taskId?: string;
+  taskId?: string | undefined;
   note: string;
   createdAt: string;
 }
