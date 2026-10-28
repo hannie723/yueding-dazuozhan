@@ -335,7 +335,7 @@ function VoteProgress({ task, approvals, rejects, bare }: { task: Task; approval
   );
 }
 
-function RoleHint({ task, submission }: { task: Task; submission?: Submission }) {
+function RoleHint({ task, submission }: { task: Task; submission?: Submission | undefined }) {
   const me = useCurrentUser();
   const members = useMembers();
   let text: string | null = null;

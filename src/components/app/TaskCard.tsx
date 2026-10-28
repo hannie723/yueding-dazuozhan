@@ -17,7 +17,7 @@ const accentBar: Record<Task["status"], string> = {
   cancelled: "bg-status-cancelled",
 };
 
-export function TaskCard({ task, hint }: { task: Task; hint?: string }) {
+export function TaskCard({ task, hint }: { task: Task; hint?: string | undefined }) {
   const { now } = useAppStore();
   const members = useMembers();
   const overdue = isOverdue(task, now);
