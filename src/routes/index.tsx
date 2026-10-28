@@ -18,7 +18,7 @@ import { balanceOf } from "@/domain/coins";
 import { dayKey } from "@/domain/dates";
 import { currentStreak } from "@/domain/progress";
 import { canVote, latestSubmission } from "@/domain/submissions";
-import { countTasksForDay, isOpen, isOverdue } from "@/domain/tasks";
+import { countTasksForDay, isOpen, isOverdue, memberDailyTaskLimit } from "@/domain/tasks";
 import type { Task } from "@/domain/types";
 import { cn } from "@/lib/utils";
 import { useAppStore, useCurrentUser } from "@/store/app-store";
@@ -26,9 +26,9 @@ import { useAppStore, useCurrentUser } from "@/store/app-store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "小组首页 · 约定计划" },
+      { title: "小组首页 · 约定大作战" },
       { name: "description", content: "查看小组成员的金币、连续达标天数、今日任务和待验收任务。" },
-      { property: "og:title", content: "小组首页 · 约定计划" },
+      { property: "og:title", content: "小组首页 · 约定大作战" },
       { property: "og:description", content: "和朋友一起完成今天的学习约定。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -58,7 +58,7 @@ function HomePage() {
   const todayTasks = useMemo(
     () =>
       state.tasks
-        .filter((t) => dayKey(t.dueAt) === today || isOverdue(t, now))
+        .filter((t) => (t.executionDate ?? dayKey(t.dueAt)) === today || isOverdue(t, now))
         .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.dueAt.localeCompare(b.dueAt)),
     [state.tasks, today, now],
   );
@@ -77,7 +77,9 @@ function HomePage() {
     [state.tasks, me.id],
   );
 
-  const myToday = todayTasks.filter((t) => t.assigneeId === me.id && t.status !== "cancelled");
+  const myToday = todayTasks.filter(
+    (t) => t.assigneeId === me.id && (t.executionDate ?? dayKey(t.dueAt)) === today && t.status !== "cancelled",
+  );
   const myDone = myToday.filter((t) => t.status === "approved").length;
   const overdueCount = state.tasks.filter((t) => isOverdue(t, now)).length;
   const shownToday = onlyMine ? todayTasks.filter((t) => t.assigneeId === me.id) : todayTasks;
@@ -96,7 +98,7 @@ function HomePage() {
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="size-3.5" />
-            约定计划
+            约定大作战
           </span>
           <IdentitySwitcher />
         </div>
@@ -111,8 +113,9 @@ function HomePage() {
         <div className="scrollbar-none flex gap-3 overflow-x-auto px-5 pb-2">
           {state.members.map((m) => {
             const count = countTasksForDay(state.tasks, m.id, today);
+            const memberLimit = memberDailyTaskLimit(m);
             const done = state.tasks.filter(
-              (t) => t.assigneeId === m.id && dayKey(t.dueAt) === today && t.status === "approved",
+              (t) => t.assigneeId === m.id && (t.executionDate ?? dayKey(t.dueAt)) === today && t.status === "approved",
             ).length;
             return (
               <Link
@@ -139,7 +142,7 @@ function HomePage() {
                   <StreakAmount value={currentStreak(state.tasks, m.id, now)} />
                 </div>
                 <div className="mt-2 flex gap-1">
-                  {Array.from({ length: state.group.dailyTaskLimit }, (_, i) => (
+                  {Array.from({ length: memberLimit }, (_, i) => (
                     <span
                       key={i}
                       className={cn(
@@ -150,7 +153,7 @@ function HomePage() {
                   ))}
                 </div>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  今日 {done}/{count} · 上限 {state.group.dailyTaskLimit}
+                  今日 {done}/{count} · 上限 {memberLimit}
                 </p>
               </Link>
             );

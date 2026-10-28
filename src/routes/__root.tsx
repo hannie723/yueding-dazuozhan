@@ -81,10 +81,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "约定计划 · 朋友互相监督学习" },
+      { title: "约定大作战 · 朋友互相监督学习" },
       { name: "description", content: "2–5 人小组互相布置学习任务、提交证据、验收打卡，用金币和连续达标天数一起坚持。" },
       { name: "theme-color", content: "#faf5ec" },
-      { property: "og:title", content: "约定计划 · 朋友互相监督学习" },
+      { property: "og:title", content: "约定大作战 · 朋友互相监督学习" },
       { property: "og:description", content: "2–5 人小组互相布置学习任务、提交证据、验收打卡。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

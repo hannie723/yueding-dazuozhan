@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDateTime, formatDue } from "@/domain/dates";
+import { dayKey, formatDateTime, formatDue } from "@/domain/dates";
 import { approvalsNeeded, canVote, hasVoted, submissionsOf } from "@/domain/submissions";
 import { canCancel, canMarkFailed, canSubmit, isOverdue, isReviewer } from "@/domain/tasks";
 import type { Screenshot, Submission, Task } from "@/domain/types";
@@ -40,9 +40,9 @@ import { useAppStore, useCurrentUser, useMembers } from "@/store/app-store";
 export const Route = createFileRoute("/tasks/$taskId")({
   head: () => ({
     meta: [
-      { title: "任务详情 · 约定计划" },
+      { title: "任务详情 · 约定大作战" },
       { name: "description", content: "查看任务状态、提交证据，并由验收人通过或退回。" },
-      { property: "og:title", content: "任务详情 · 约定计划" },
+      { property: "og:title", content: "任务详情 · 约定大作战" },
       { property: "og:description", content: "查看任务状态、提交证据与验收结果。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -131,6 +131,7 @@ function TaskDetailPage() {
             {task.reviewerIds.map((id) => members.get(id)?.name).join("、")}
           </InfoRow>
           <InfoRow label="发起人">{creator?.name}</InfoRow>
+          <InfoRow label="实际执行日期">{task.executionDate ?? dayKey(task.dueAt)}</InfoRow>
           <InfoRow label="截止时间">
             <Clock className={cn("size-4", overdue ? "text-status-failed" : "text-muted-foreground")} />
             <span className={cn(overdue && "text-status-failed")}>{formatDue(task.dueAt, now)}</span>
@@ -163,6 +164,9 @@ function TaskDetailPage() {
           </section>
         )}
 
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/tasks/new" search={{ repeat: task.id }}>再次创建类似任务</Link>
+        </Button>
         <MoreActions task={task} />
       </div>
     </div>
@@ -415,9 +419,9 @@ function SubmissionCard({ task, submission, latest }: { task: Task; submission: 
 }
 
 function MoreActions({ task }: { task: Task }) {
-  const { actions } = useAppStore();
+  const { actions, now } = useAppStore();
   const me = useCurrentUser();
-  const showFail = canMarkFailed(task, me.id);
+  const showFail = canMarkFailed(task, me.id, now);
   const showCancel = canCancel(task, me.id);
   if (!showFail && !showCancel) return null;
 

@@ -62,6 +62,54 @@ export function createTask(
   };
 }
 
+/* ---------- 重复任务：仅复制可复用约定，并要求调用方提供新日期 ---------- */
+export function duplicateTask(
+  state: AppState,
+  input: { sourceTaskId: string; executionDate: string; dueAt: string },
+  ctx: DomainContext,
+): ServiceResult<Task> {
+  const source = findTask(state, input.sourceTaskId);
+  if (!source) return fail("原任务不存在");
+  return createTask(
+    state,
+    {
+      title: source.title,
+      criteria: source.criteria,
+      assigneeId: source.assigneeId,
+      reviewerIds: source.reviewerIds,
+      reviewMode: source.reviewMode,
+      executionDate: input.executionDate,
+      dueAt: input.dueAt,
+      reward: source.reward,
+      penalty: source.penalty,
+    },
+    ctx,
+  );
+}
+
+/* ---------- 修改当前模拟成员的个人每日任务上限 ---------- */
+export function setDailyTaskLimit(
+  state: AppState,
+  memberId: string,
+  dailyTaskLimit: number,
+): ServiceResult<number> {
+  if (memberId !== state.currentUserId) return fail("只能修改当前模拟身份自己的上限");
+  if (!Number.isInteger(dailyTaskLimit) || dailyTaskLimit < 1 || dailyTaskLimit > 10)
+    return fail("每日任务上限必须是 1–10 的整数");
+  if (!state.members.some((member) => member.id === memberId)) return fail("成员不存在");
+  return {
+    ok: true,
+    state: {
+      ...state,
+      members: state.members.map((member) =>
+        member.id === memberId ? { ...member, dailyTaskLimit } : member,
+      ),
+    },
+    events: [],
+    data: dailyTaskLimit,
+  };
+}
+
 /* ---------- 提交证据 ---------- */
 export function submitEvidence(
   state: AppState,
@@ -71,6 +119,7 @@ export function submitEvidence(
   const task = findTask(state, input.taskId);
   if (!task) return fail("任务不存在");
   if (!canSubmit(task, state.currentUserId)) return fail("只有执行人可以在任务进行中提交");
+  if (ctx.now.getTime() >= new Date(task.dueAt).getTime()) return fail("已超过提交截止时间，不能再提交");
   if (!input.note.trim() && input.screenshots.length === 0)
     return fail("请填写完成说明或添加截图");
   const submission = buildSubmission({
@@ -164,14 +213,16 @@ function applyFailure(state: AppState, task: Task, ctx: DomainContext) {
 export function markFailed(state: AppState, taskId: string, ctx: DomainContext): ServiceResult {
   const task = findTask(state, taskId);
   if (!task) return fail("任务不存在");
-  if (!canMarkFailed(task, state.currentUserId)) return fail("只有发起人或验收人可以判定未完成");
+  if (!canMarkFailed(task, state.currentUserId, ctx.now))
+    return fail("任务未逾期，或只有发起人、验收人可以判定未完成");
   const { state: next, events } = applyFailure(state, task, ctx);
   return { ok: true, state: next, events, data: undefined };
 }
 
 /* ---------- 到期结算：所有逾期未通过的任务判为未完成 ---------- */
 export function settleOverdue(state: AppState, ctx: DomainContext): ServiceResult<number> {
-  const overdue = state.tasks.filter((t) => isOverdue(t, ctx.now));
+  // 逾期只表示执行人尚未提交；已提交任务必须继续等待验收。
+  const overdue = state.tasks.filter((t) => t.status === "in_progress" && isOverdue(t, ctx.now));
   let next = state;
   const events: DomainEvent[] = [];
   for (const task of overdue) {

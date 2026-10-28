@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowUpRight, Gift, History, Lock, RotateCcw, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Gift, History, Lock, Minus, Plus, RotateCcw, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { balanceOf, transactionsOf } from "@/domain/coins";
 import { formatDateTime, formatDue, weekdayLabel } from "@/domain/dates";
 import { currentStreak, weekSummary, type DayStatus } from "@/domain/progress";
-import { isOverdue } from "@/domain/tasks";
+import { isOverdue, memberDailyTaskLimit } from "@/domain/tasks";
 import type { Task } from "@/domain/types";
 import { cn } from "@/lib/utils";
 import { useAppStore, useCurrentUser } from "@/store/app-store";
@@ -30,9 +30,9 @@ export const Route = createFileRoute("/me")({
   validateSearch: z.object({ member: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "个人记录 · 约定计划" },
+      { title: "个人记录 · 约定大作战" },
       { name: "description", content: "查看金币流水、历史任务和本周达标情况。" },
-      { property: "og:title", content: "个人记录 · 约定计划" },
+      { property: "og:title", content: "个人记录 · 约定大作战" },
       { property: "og:description", content: "金币流水、历史任务和本周达标一目了然。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -75,6 +75,12 @@ function RecordsPage() {
   const flows = transactionsOf(state.transactions, memberId);
   const income = flows.filter((f) => f.amount > 0 && f.reason !== "initial").reduce((s, f) => s + f.amount, 0);
   const spent = flows.filter((f) => f.amount < 0).reduce((s, f) => s - f.amount, 0);
+  const dailyLimit = memberDailyTaskLimit(member);
+  const changeDailyLimit = (value: number) => {
+    const result = actions.setDailyTaskLimit(memberId, value);
+    if (!result.ok) toast.error(result.error);
+    else toast.success(`每日任务上限已设为 ${result.data}`);
+  };
 
   const tasks = useMemo(() => {
     const mine = state.tasks
@@ -130,6 +136,41 @@ function RecordsPage() {
             <Mini label="连续达标" value={`🔥 ${streak} 天`} />
             <Mini label="本周达标" value={`${week.met}/7 天`} />
             <Mini label="累计收入 / 扣除" value={`+${income} / -${spent}`} />
+          </div>
+          <div className="flex items-center justify-between border-t px-4 py-3">
+            <div>
+              <p className="text-sm font-medium">每日任务上限</p>
+              <p className="text-[11px] text-muted-foreground">
+                {memberId === me.id ? "仅修改当前模拟身份的本人设置" : "其他成员设置仅供查看"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {memberId === me.id && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="减少每日任务上限"
+                  disabled={dailyLimit <= 1}
+                  onClick={() => changeDailyLimit(dailyLimit - 1)}
+                >
+                  <Minus />
+                </Button>
+              )}
+              <span className="min-w-12 text-center font-semibold tabular-nums">{dailyLimit} 个</span>
+              {memberId === me.id && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="增加每日任务上限"
+                  disabled={dailyLimit >= 10}
+                  onClick={() => changeDailyLimit(dailyLimit + 1)}
+                >
+                  <Plus />
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
 
@@ -265,7 +306,9 @@ function RecordsPage() {
                     >
                       <div className="min-w-0 flex-1">
                         <p className={cn("truncate text-sm", t.status === "cancelled" && "text-muted-foreground line-through")}>{t.title}</p>
-                        <p className="text-[11px] text-muted-foreground">截止 {formatDue(t.dueAt, now)}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          执行 {t.executionDate ?? "—"} · 截止 {formatDue(t.dueAt, now)}
+                        </p>
                       </div>
                       <StatusBadge status={t.status} overdue={isOverdue(t, now)} />
                     </Link>

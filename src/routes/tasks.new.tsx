@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Info, User, Users } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { PageHeader } from "@/components/app/AppShell";
 import { MemberAvatar } from "@/components/app/primitives";
@@ -9,17 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { addDays, atTime, dayKey, toLocalInputValue } from "@/domain/dates";
-import { countTasksForDay, type NewTaskErrors } from "@/domain/tasks";
+import { countTasksForDay, memberDailyTaskLimit, type NewTaskErrors } from "@/domain/tasks";
 import type { MemberId, ReviewMode } from "@/domain/types";
 import { cn } from "@/lib/utils";
 import { useAppStore, useCurrentUser } from "@/store/app-store";
 
 export const Route = createFileRoute("/tasks/new")({
+  validateSearch: z.object({ repeat: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "布置任务 · 约定计划" },
+      { title: "布置任务 · 约定大作战" },
       { name: "description", content: "给自己或朋友布置一个学习任务，约定达标标准、验收人、截止时间和金币奖惩。" },
-      { property: "og:title", content: "布置任务 · 约定计划" },
+      { property: "og:title", content: "布置任务 · 约定大作战" },
       { property: "og:description", content: "约定达标标准、验收人和金币奖惩。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,27 +38,31 @@ function NewTaskPage() {
   const { state, now, actions } = useAppStore();
   const me = useCurrentUser();
   const navigate = useNavigate();
+  const { repeat } = Route.useSearch();
+  const sourceTask = state.tasks.find((task) => task.id === repeat);
 
   const defaultDue = useMemo(() => {
     const tonight = atTime(now, 22);
     return tonight.getTime() > now.getTime() + 30 * 60_000 ? tonight : atTime(addDays(now, 1), 22);
   }, [now]);
 
-  const [title, setTitle] = useState("");
-  const [criteria, setCriteria] = useState("");
-  const [assigneeId, setAssigneeId] = useState<MemberId>(me.id);
-  const [reviewMode, setReviewMode] = useState<ReviewMode>("single");
+  const [title, setTitle] = useState(() => sourceTask?.title ?? "");
+  const [criteria, setCriteria] = useState(() => sourceTask?.criteria ?? "");
+  const [assigneeId, setAssigneeId] = useState<MemberId>(() => sourceTask?.assigneeId ?? me.id);
+  const [reviewMode, setReviewMode] = useState<ReviewMode>(() => sourceTask?.reviewMode ?? "single");
   const [reviewerIds, setReviewerIds] = useState<MemberId[]>(() => {
+    if (sourceTask) return [...sourceTask.reviewerIds];
     const other = state.members.find((m) => m.id !== me.id);
     return other ? [other.id] : [];
   });
-  const [dueAt, setDueAt] = useState(toLocalInputValue(defaultDue));
-  const [reward, setReward] = useState(10);
-  const [penalty, setPenalty] = useState(5);
+  // 重复创建时将两个日期留空，强制用户重新选择执行日和提交截止时间。
+  const [executionDate, setExecutionDate] = useState(() => sourceTask ? "" : dayKey(now));
+  const [dueAt, setDueAt] = useState(() => sourceTask ? "" : toLocalInputValue(defaultDue));
+  const [reward, setReward] = useState(() => sourceTask?.reward ?? 10);
+  const [penalty, setPenalty] = useState(() => sourceTask?.penalty ?? 5);
   const [errors, setErrors] = useState<NewTaskErrors>({});
 
-  const dueDay = dueAt ? dayKey(new Date(dueAt)) : dayKey(now);
-  const limit = state.group.dailyTaskLimit;
+  const selectedExecutionDate = executionDate || dayKey(now);
 
   const pickAssignee = (id: MemberId) => {
     setAssigneeId(id);
@@ -121,6 +127,7 @@ function NewTaskPage() {
       assigneeId,
       reviewerIds,
       reviewMode,
+      executionDate,
       dueAt: dueAt ? new Date(dueAt).toISOString() : "",
       reward,
       penalty,
@@ -139,7 +146,7 @@ function NewTaskPage() {
 
   return (
     <div className="animate-pop-in">
-      <PageHeader title="布置任务" />
+      <PageHeader title={sourceTask ? "再次创建任务" : "布置任务"} />
       <form onSubmit={submit} className="space-y-6 px-5 pb-6" noValidate>
         <Field label="任务名称" error={errors.title}>
           <Input
@@ -182,10 +189,11 @@ function NewTaskPage() {
           </div>
         </Field>
 
-        <Field label="执行人" hint={`每人每天最多 ${limit} 个任务`} error={errors.assigneeId}>
+        <Field label="执行人" hint="每位成员可设置自己的每日任务上限" error={errors.assigneeId}>
           <div className="grid grid-cols-4 gap-2">
             {state.members.map((m) => {
-              const count = countTasksForDay(state.tasks, m.id, dueDay);
+              const count = countTasksForDay(state.tasks, m.id, selectedExecutionDate);
+              const limit = memberDailyTaskLimit(m);
               const full = count >= limit;
               const selected = assigneeId === m.id;
               return (
@@ -249,7 +257,19 @@ function NewTaskPage() {
           )}
         </Field>
 
-        <Field label="截止时间" error={errors.dueAt}>
+        <Field label="实际执行日期" hint="按此日期统计个人每日任务上限" error={errors.executionDate}>
+          <Input
+            type="date"
+            value={executionDate}
+            onChange={(e) => {
+              setExecutionDate(e.target.value);
+              setErrors((x) => ({ ...x, executionDate: undefined, assigneeId: undefined }));
+            }}
+            className="h-11 rounded-xl bg-card"
+          />
+        </Field>
+
+        <Field label="提交截止时间" hint="执行人必须在此时间前提交证据" error={errors.dueAt}>
           <Input
             type="datetime-local"
             value={dueAt}

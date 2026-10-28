@@ -3,16 +3,16 @@
  * 金币流水由任务结果推导，保证余额与记录一致。
  */
 import { initialGrant, penaltyFor, rewardFor } from "@/domain/coins";
-import { addDays, atTime } from "@/domain/dates";
+import { addDays, atTime, dayKey } from "@/domain/dates";
 import type { AppState, Member, Submission, Task } from "@/domain/types";
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 const members: Member[] = [
-  { id: "m-lin", name: "小林", color: 1, bio: "考研冲刺中" },
-  { id: "m-zhe", name: "阿哲", color: 2, bio: "每天一篇论文" },
-  { id: "m-tang", name: "糖糖", color: 3, bio: "雅思 7 分！" },
-  { id: "m-zhou", name: "小周", color: 4, bio: "算法刷题人" },
+  { id: "m-lin", name: "小林", color: 1, dailyTaskLimit: 3, bio: "考研冲刺中" },
+  { id: "m-zhe", name: "阿哲", color: 2, dailyTaskLimit: 3, bio: "每天一篇论文" },
+  { id: "m-tang", name: "糖糖", color: 3, dailyTaskLimit: 3, bio: "雅思 7 分！" },
+  { id: "m-zhou", name: "小周", color: 4, dailyTaskLimit: 3, bio: "算法刷题人" },
 ];
 
 const HISTORY: Array<{ title: string; criteria: string }> = [
@@ -53,6 +53,7 @@ export function createMockState(now: Date = new Date()): AppState {
           assigneeId: m.id,
           reviewerIds: [reviewerFor(m.id)],
           reviewMode: "single",
+          executionDate: dayKey(due),
           dueAt: due.toISOString(),
           reward: 10,
           penalty: 5,
@@ -99,6 +100,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-lin",
     reviewerIds: ["m-zhe"],
     reviewMode: "single",
+    executionDate: dayKey(tonight),
     dueAt: tonight,
     reward: 10,
     penalty: 5,
@@ -114,6 +116,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-lin",
     reviewerIds: ["m-zhe", "m-tang", "m-zhou"],
     reviewMode: "vote",
+    executionDate: dayKey(tonight),
     dueAt: tonight,
     reward: 20,
     penalty: 10,
@@ -129,6 +132,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-zhe",
     reviewerIds: ["m-lin"],
     reviewMode: "single",
+    executionDate: dayKey(new Date(later(5))),
     dueAt: later(5),
     reward: 15,
     penalty: 5,
@@ -144,6 +148,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-tang",
     reviewerIds: ["m-lin"],
     reviewMode: "single",
+    executionDate: dayKey(tonight),
     dueAt: tonight,
     reward: 10,
     penalty: 5,
@@ -159,6 +164,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-zhou",
     reviewerIds: ["m-lin", "m-zhe", "m-tang"],
     reviewMode: "vote",
+    executionDate: dayKey(new Date(later(6))),
     dueAt: later(6),
     reward: 15,
     penalty: 5,
@@ -174,6 +180,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-zhou",
     reviewerIds: ["m-tang"],
     reviewMode: "single",
+    executionDate: dayKey(tonight),
     dueAt: tonight,
     reward: 10,
     penalty: 5,
@@ -190,6 +197,7 @@ export function createMockState(now: Date = new Date()): AppState {
     assigneeId: "m-zhe",
     reviewerIds: ["m-zhou"],
     reviewMode: "single",
+    executionDate: dayKey(new Date(earlier(0.25))),
     dueAt: earlier(0.25),
     reward: 5,
     penalty: 5,

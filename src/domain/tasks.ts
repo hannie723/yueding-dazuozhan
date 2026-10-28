@@ -2,6 +2,21 @@ import { dayKey } from "./dates";
 import type { AppState, MemberId, ReviewMode, Task, TaskStatus } from "./types";
 
 export const DEFAULT_DAILY_TASK_LIMIT = 3;
+export const MIN_DAILY_TASK_LIMIT = 1;
+export const MAX_DAILY_TASK_LIMIT = 10;
+
+export function memberDailyTaskLimit(member: { dailyTaskLimit?: number }): number {
+  const limit = member.dailyTaskLimit;
+  return Number.isInteger(limit) && limit! >= MIN_DAILY_TASK_LIMIT && limit! <= MAX_DAILY_TASK_LIMIT
+    ? limit!
+    : DEFAULT_DAILY_TASK_LIMIT;
+}
+
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   in_progress: "进行中",
@@ -18,13 +33,17 @@ export function isOpen(task: Task): boolean {
 }
 
 export function isOverdue(task: Task, now: Date): boolean {
-  return isOpen(task) && new Date(task.dueAt).getTime() < now.getTime();
+  // 截止时间只约束执行人提交；已提交待验收不代表执行人逾期。
+  return task.status === "in_progress" && new Date(task.dueAt).getTime() < now.getTime();
 }
 
 /** 某人某天（按截止日期）收到的有效任务数，已取消的不计入 */
 export function countTasksForDay(tasks: Task[], assigneeId: MemberId, day: string): number {
   return tasks.filter(
-    (t) => t.assigneeId === assigneeId && t.status !== "cancelled" && dayKey(t.dueAt) === day,
+    (t) =>
+      t.assigneeId === assigneeId &&
+      t.status !== "cancelled" &&
+      (t.executionDate ?? dayKey(t.dueAt)) === day,
   ).length;
 }
 
@@ -34,6 +53,7 @@ export interface NewTaskInput {
   assigneeId: MemberId;
   reviewerIds: MemberId[];
   reviewMode: ReviewMode;
+  executionDate: string;
   dueAt: string;
   reward: number;
   penalty: number;
@@ -55,6 +75,7 @@ export function validateNewTask(
   if (!input.criteria.trim()) errors.criteria = "请写清楚怎样才算达标";
 
   if (!memberIds.has(input.assigneeId)) errors.assigneeId = "请选择执行人";
+  if (!isCalendarDate(input.executionDate)) errors.executionDate = "请选择有效的执行日期";
 
   const reviewers = input.reviewerIds.filter((id) => memberIds.has(id));
   if (reviewers.length === 0) {
@@ -71,10 +92,11 @@ export function validateNewTask(
   if (!input.dueAt || Number.isNaN(due.getTime())) errors.dueAt = "请选择截止时间";
   else if (due.getTime() <= now.getTime()) errors.dueAt = "截止时间需要晚于现在";
   else if (!errors.assigneeId) {
-    const limit = state.group.dailyTaskLimit;
-    const count = countTasksForDay(state.tasks, input.assigneeId, dayKey(due));
+    const assignee = state.members.find((member) => member.id === input.assigneeId);
+    const limit = assignee ? memberDailyTaskLimit(assignee) : DEFAULT_DAILY_TASK_LIMIT;
+    const count = countTasksForDay(state.tasks, input.assigneeId, input.executionDate);
     if (count >= limit) {
-      errors.assigneeId = `该成员当天已有 ${count} 个任务，每人每天最多 ${limit} 个`;
+      errors.assigneeId = `该成员执行日已有 ${count} 个任务，个人每日最多 ${limit} 个`;
     }
   }
 
@@ -99,6 +121,7 @@ export function buildTask(
     assigneeId: input.assigneeId,
     reviewerIds: [...new Set(input.reviewerIds)],
     reviewMode: input.reviewMode,
+    executionDate: input.executionDate,
     dueAt: new Date(input.dueAt).toISOString(),
     reward: input.reward,
     penalty: input.penalty,
@@ -118,8 +141,12 @@ export function isReviewer(task: Task, userId: MemberId): boolean {
 }
 
 /** 发起人或验收人可以将任务判定为未完成 */
-export function canMarkFailed(task: Task, userId: MemberId): boolean {
-  return isOpen(task) && (task.creatorId === userId || isReviewer(task, userId));
+export function canMarkFailed(task: Task, userId: MemberId, now: Date): boolean {
+  return (
+    task.status === "in_progress" &&
+    isOverdue(task, now) &&
+    (task.creatorId === userId || isReviewer(task, userId))
+  );
 }
 
 /** 发起人可以在执行人提交前取消任务 */

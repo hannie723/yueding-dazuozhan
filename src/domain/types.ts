@@ -12,6 +12,8 @@ export interface Member {
   name: string;
   /** 头像配色序号，对应设计系统中的 --member-1 ~ --member-5 */
   color: 1 | 2 | 3 | 4 | 5;
+  /** 成员个人每日可承担任务上限（原型设置，不代表服务端授权） */
+  dailyTaskLimit: number;
   /** 一句话签名 */
   bio?: string | undefined;
 }
@@ -21,7 +23,7 @@ export interface Group {
   name: string;
   motto: string;
   memberIds: MemberId[];
-  /** 每人每天最多收到的任务数 */
+  /** 旧版组级上限字段，仅保留兼容性；当前规则使用 Member.dailyTaskLimit */
   dailyTaskLimit: number;
 }
 
@@ -45,6 +47,8 @@ export interface Task {
   assigneeId: MemberId;
   reviewerIds: MemberId[];
   reviewMode: ReviewMode;
+  /** 本地日历日期 YYYY-MM-DD，与创建时间、提交截止时间相互独立 */
+  executionDate: string;
   /** ISO 时间 */
   dueAt: string;
   reward: number;

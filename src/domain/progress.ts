@@ -16,7 +16,10 @@ export function dayStatus(tasks: Task[], memberId: MemberId, day: Date, today: D
   const todayKey = dayKey(today);
   if (key > todayKey) return "future";
   const dayTasks = tasks.filter(
-    (t) => t.assigneeId === memberId && t.status !== "cancelled" && dayKey(t.dueAt) === key,
+    (t) =>
+      t.assigneeId === memberId &&
+      t.status !== "cancelled" &&
+      (t.executionDate ?? dayKey(t.dueAt)) === key,
   );
   if (dayTasks.length === 0) return "none";
   if (dayTasks.some((t) => t.status === "failed")) return "missed";

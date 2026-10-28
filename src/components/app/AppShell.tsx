@@ -70,7 +70,7 @@ export function LoadingScreen() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 bg-background">
       <div className="size-10 animate-spin rounded-full border-4 border-primary-soft border-t-primary" />
-      <p className="text-sm text-muted-foreground">正在打开约定计划…</p>
+      <p className="text-sm text-muted-foreground">正在打开约定大作战…</p>
     </div>
   );
 }

@@ -19,6 +19,7 @@ interface AppStore {
   actions: {
     switchUser(id: MemberId): void;
     createTask(input: NewTaskInput): ActionResult<Task>;
+    setDailyTaskLimit(memberId: MemberId, dailyTaskLimit: number): ActionResult<number>;
     submitEvidence(input: { taskId: string; note: string; screenshots: Screenshot[] }): ActionResult;
     reviewTask(input: { taskId: string; decision: ReviewDecision; comment?: string | undefined }): ActionResult<"approved" | "rejected" | "pending">;
     markFailed(taskId: string): ActionResult;
@@ -50,16 +51,22 @@ export function AppStoreProvider({
   fallback?: ReactNode;
 }) {
   const [state, setState] = useState<AppState | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const stateRef = useRef<AppState | null>(null);
 
   useEffect(() => {
     let alive = true;
-    repository.load().then((s) => {
-      if (!alive) return;
-      stateRef.current = s;
-      setState(s);
-    });
+    repository.load()
+      .then((s) => {
+        if (!alive) return;
+        stateRef.current = s;
+        setState(s);
+      })
+      .catch((error: unknown) => {
+        if (!alive) return;
+        setLoadError(error instanceof Error ? error.message : "本地数据加载失败，已阻止写入。");
+      });
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
     return () => {
       alive = false;
@@ -97,6 +104,8 @@ export function AppStoreProvider({
         if (current) commit({ ...current, currentUserId: id });
       },
       createTask: (input) => run((s, ctx) => services.createTask(s, input, ctx)),
+      setDailyTaskLimit: (memberId, dailyTaskLimit) =>
+        run((s) => services.setDailyTaskLimit(s, memberId, dailyTaskLimit)),
       submitEvidence: (input) => run((s, ctx) => services.submitEvidence(s, input, ctx)),
       reviewTask: (input) => run((s, ctx) => services.reviewTask(s, input, ctx)),
       markFailed: (taskId) => run((s, ctx) => services.markFailed(s, taskId, ctx)),
@@ -109,7 +118,16 @@ export function AppStoreProvider({
     [run, commit, repository],
   );
 
-  if (!state) return <>{fallback ?? null}</>;
+  if (!state) {
+    if (loadError) {
+      return (
+        <div role="alert" className="mx-auto max-w-lg p-6 text-sm text-status-failed">
+          数据加载失败：{loadError}
+        </div>
+      );
+    }
+    return <>{fallback ?? null}</>;
+  }
 
   return (
     <AppStoreContext.Provider value={{ state, now, actions }}>{children}</AppStoreContext.Provider>
