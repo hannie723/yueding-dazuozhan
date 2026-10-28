@@ -8,7 +8,7 @@ import { IdentitySwitcher } from "./IdentitySwitcher";
 /** 手机优先的应用外壳：桌面端居中显示为手机宽度的卡片 */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background md:my-6 md:min-h-[calc(100dvh-3rem)] md:overflow-hidden md:rounded-[2rem] md:shadow-lift">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background md:mt-6 md:min-h-[calc(100dvh-1.5rem)] md:rounded-t-[2rem] md:shadow-lift">
       <main className="flex-1 pb-28">{children}</main>
       <BottomNav />
     </div>
@@ -19,7 +19,7 @@ function BottomNav() {
   const item =
     "flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[11px] text-muted-foreground transition-colors";
   return (
-    <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t bg-card/95 px-6 pt-2 backdrop-blur md:bottom-6 md:rounded-b-[2rem]">
+    <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t bg-card/95 px-6 pt-2 backdrop-blur">
       <div className="flex items-end">
         <Link
           to="/"
