@@ -5,20 +5,15 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * 约定计划 · 设计系统
+ * 温暖奶油底色 + 陶土橙主色，状态用柔和的色块区分。
+ * 所有颜色使用 oklch，并通过 @theme inline 暴露为 Tailwind 工具类。
  */
 
 @theme inline {
+  --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: "LXGW WenKai", "Noto Sans SC", "PingFang SC", serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -26,14 +21,17 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -46,6 +44,35 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+
+  /* 状态色 */
+  --color-status-progress: var(--status-progress);
+  --color-status-progress-soft: var(--status-progress-soft);
+  --color-status-review: var(--status-review);
+  --color-status-review-soft: var(--status-review-soft);
+  --color-status-done: var(--status-done);
+  --color-status-done-soft: var(--status-done-soft);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-rejected-soft: var(--status-rejected-soft);
+  --color-status-failed: var(--status-failed);
+  --color-status-failed-soft: var(--status-failed-soft);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-soft: var(--status-cancelled-soft);
+
+  --color-coin: var(--coin);
+  --color-coin-soft: var(--coin-soft);
+  --color-streak: var(--streak);
+
+  /* 成员头像配色 */
+  --color-member-1: var(--member-1);
+  --color-member-2: var(--member-2);
+  --color-member-3: var(--member-3);
+  --color-member-4: var(--member-4);
+  --color-member-5: var(--member-5);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -62,26 +89,58 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --radius: 0.875rem;
+
+  --canvas: oklch(0.945 0.022 75);
+  --background: oklch(0.982 0.012 82);
+  --foreground: oklch(0.3 0.035 50);
+  --card: oklch(0.997 0.006 85);
+  --card-foreground: oklch(0.3 0.035 50);
+  --popover: oklch(0.997 0.006 85);
+  --popover-foreground: oklch(0.3 0.035 50);
+
+  --primary: oklch(0.64 0.145 42);
+  --primary-foreground: oklch(0.99 0.008 85);
+  --primary-soft: oklch(0.93 0.045 55);
+
+  --secondary: oklch(0.95 0.022 78);
+  --secondary-foreground: oklch(0.36 0.04 50);
+  --muted: oklch(0.955 0.016 80);
+  --muted-foreground: oklch(0.54 0.03 55);
+  --accent: oklch(0.93 0.035 72);
+  --accent-foreground: oklch(0.32 0.04 50);
+  --destructive: oklch(0.58 0.17 25);
+  --destructive-foreground: oklch(0.99 0.008 85);
+  --border: oklch(0.905 0.022 75);
+  --input: oklch(0.89 0.025 75);
+  --ring: oklch(0.64 0.145 42);
+
+  --status-progress: oklch(0.55 0.1 245);
+  --status-progress-soft: oklch(0.94 0.03 240);
+  --status-review: oklch(0.6 0.13 70);
+  --status-review-soft: oklch(0.94 0.06 85);
+  --status-done: oklch(0.53 0.11 150);
+  --status-done-soft: oklch(0.94 0.045 150);
+  --status-rejected: oklch(0.58 0.13 330);
+  --status-rejected-soft: oklch(0.94 0.035 340);
+  --status-failed: oklch(0.56 0.17 25);
+  --status-failed-soft: oklch(0.94 0.04 25);
+  --status-cancelled: oklch(0.58 0.015 60);
+  --status-cancelled-soft: oklch(0.94 0.008 70);
+
+  --coin: oklch(0.68 0.14 75);
+  --coin-soft: oklch(0.95 0.06 90);
+  --streak: oklch(0.65 0.18 40);
+
+  --member-1: oklch(0.72 0.12 45);
+  --member-2: oklch(0.68 0.09 220);
+  --member-3: oklch(0.74 0.11 350);
+  --member-4: oklch(0.68 0.1 150);
+  --member-5: oklch(0.74 0.12 90);
+
+  --shadow-soft: 0 1px 2px oklch(0.4 0.05 50 / 6%), 0 4px 14px -6px oklch(0.4 0.05 50 / 12%);
+  --shadow-lift: 0 10px 30px -12px oklch(0.55 0.12 42 / 45%);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -97,48 +156,58 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
-}
-
 @layer base {
   * {
     border-color: var(--color-border);
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+  html {
+    -webkit-tap-highlight-color: transparent;
   }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 截图占位的斜纹底 */
+@utility placeholder-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--muted) 0 8px,
+    var(--secondary) 8px 16px
+  );
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@utility animate-pop-in {
+  animation: pop-in 0.25s ease-out both;
 }
